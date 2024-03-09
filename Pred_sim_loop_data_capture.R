@@ -1,24 +1,36 @@
 
 
-#Last updated 6/3/2024
+#Last updated 9/3/2024
+#now includes subfunctions which get called up. 
 
 #This code works to find all the .mat files in a folder and extract data into a single dataframe. \
 #The dataframe can then be written to .CSV  
 
+#install.packages('R.matlab')
 
-install.packages('R.matlab')
 library(R.matlab)
+#for trapz function (used in EMA calculation)
+library(pracma)
 
-#set you working directory to the correct folder
-#setwd('G:/project files/gravity sims/R code gravity/Falisse_et_al_2022_chris3')
+
+#this folder should be where the R code and functions are stored 
 setwd('G:/project files/aging sims')
+source('MTU_data.R')
+source('GRF_data.R')
+source('ST_data.R')
+source('EMA_data.R')
+source('Work_data.R')
 
-
+#this folder should be where the Raw data (.mat files) are stored 
+#setwd('G:/project files/gravity sims/R code gravity/Falisse_et_al_2022_chris3')
+setwd('G:/project files/aging sims/raw data')
 
 #get list of files
 fileslist<-list.files(pattern='.mat')
 
+#an example if you want a single file
 #file='Falisse_et_al_2022_job263.mat'
+ii=1
 outdat=data.frame()
 
 for (ii in 1:length(fileslist)){
@@ -26,109 +38,59 @@ for (ii in 1:length(fileslist)){
 file=fileslist[ii]
 dat<-readMat(file)
 
-
-IG.pelvis <- as.numeric(dat$model.info[[7]])
-# OS_path   
-Model_info <-as.data.frame(dat$R[9][1])
-Model_mass <- as.numeric(Model_info[1,1]) #kilograms
-Model_weight <- as.numeric(Model_info[2,1]) #newtons
-
-Spatiotemp<-as.data.frame(dat$R[11])
-Step_length<-as.numeric(Spatiotemp$X1.1[10])
-Step_length_R<-as.numeric(Spatiotemp$X1.1[1])
-Step_length_L<-as.numeric(Spatiotemp$X1.1[2])
-Duty_factor_R<-as.numeric(Spatiotemp$X1.1[3])/100
-Duty_factor_L<-as.numeric(Spatiotemp$X1.1[5])/100
-Double_support<-as.numeric(Spatiotemp$X1.1[7])
-Stride_freq<-as.numeric(Spatiotemp$X1.1[8])
-Speed<-Step_length/(1/Stride_freq)
-
-#R.S.Subject == target speed
-
-
-COT<-dat$R[,,1]$metabolics[,,1]$Bhargava2004[,,1]$COT[1]
-
-
-GRF_dat<-dat$R[8][1]
-#3 is the GRF of the right foot
-#4 is the GRF of the left foot
-#5 is the GR_Moment of the right foot
-#6 is the GR_Moment of the left foot
-#7 is the COP of the right foot
-#8 is the COP of the left foot
-
-#gets the GRFs for the right foot
-GRF_R<-GRF_dat[[1]][3]
-#gets the GRFs for the left foot
-GRF_L<-GRF_dat[[1]][4]
-
-#1 = fore-aft, 2 = vert, 3 = lateral
-
-# plot(GRF_R[[1]][,1],type='l', main='fore-aft GRF right')
-# plot(GRF_R[[1]][,2],type='l', main='Vert GRF right')
-# plot(GRF_R[[1]][,3],type='l', main='lateral GRF right')
-# abline(h=0)
-
-GRFvert_R_max = max(GRF_R[[1]][,2])
-GRFvert_R_min = min(GRF_R[[1]][,2])
-
-GRFvert_L_max = max(GRF_L[[1]][,2])
-GRFvert_L_min = min(GRF_L[[1]][,2])
-
-GRFfore_R_max = max(GRF_R[[1]][,1])
-GRFfore_R_min = min(GRF_R[[1]][,1])
-
-GRFfore_L_max = max(GRF_L[[1]][,1])
-GRFfore_L_min = min(GRF_L[[1]][,1])
-
+#An example of how to view the data structure in R 
+#dat2<-dat$R
+#print(dat2)
 
 
 #############################
-#check if MTU are scaled
+# Spatiotemp data
 #############################
+
+#return spatio_temporial data
+dat_temp1<- ST_data(dat)
+
+#############################
+# GROUND reaction forces 
+#############################
+
+#returns the GRF data max mnd mins 
+dat_temp2<-GRF_data(dat)
+
+#############################
+#MTU are scaling
+#############################
+
+#call the MTU_data.R function that extracts the following 
 # 'soleus_r'
 # 'lat_gas_r'
 # 'med_gas_r'
+#note only works with human model
+
+dat_temp3<-MTU_data(dat)
+
+#############################
+#  EMA
+#############################
 
 
-model_dat <- dat$model.info
-#print(model_dat)
-muscle.info <- model_dat[,,1][3]
-#print(muscle.info)
-parameters<-muscle.info$muscle.info[,,1]
+#call the EMA_data function, needs the model weight in Newtons. 
+dat_temp4<-EMA_data(dat,dat_temp1$Model_weight)
 
-med_gas_r<-parameters[[3]][,,32]
-med_gas_r_tendon<-med_gas_r$tendon.stiff.shift[1]
-med_gas_r_muscle<-med_gas_r$muscle.strength[1]
+#############################
+#  Joint work, total external work
+#############################
 
-lat_gas_r<-parameters[[3]][,,33]
-lat_gas_r_tendon<-lat_gas_r$tendon.stiff.shift[1]
-lat_gas_r_muscle<-lat_gas_r$muscle.strength[1]
-
-soleus_r<-parameters[[3]][,,34]
-soleus_r_tendon<-soleus_r$tendon.stiff.shift[1]
-soleus_r_muscle<-soleus_r$muscle.strength[1]
+#returns the work data 
+dat_temp5<-Work_data(dat)
 
 
 
-#build data frame
+#############################
+#  Build final data frame for export
+#############################
 
-dat_temp<- data.frame(file=file, 
-                      Step_length_R=Step_length_R, 
-                      Duty_factor_R=Duty_factor_R, 
-                      Stride_freq=Stride_freq, 
-                      Speed=Speed,
-                      COT=COT,
-                      GRFvert_R_max = GRFvert_R_max,
-                      GRFvert_R_min = GRFvert_R_min,
-                      GRFfore_R_max = GRFfore_R_max,
-                      GRFfore_R_min = GRFfore_R_min,
-                      med_gas_r_tendon=med_gas_r_tendon,
-                      med_gas_r_muscle=med_gas_r_muscle,
-                      lat_gas_r_tendon=lat_gas_r_tendon,
-                      lat_gas_r_muscle=lat_gas_r_muscle,
-                      soleus_r_tendon=soleus_r_tendon,
-                      soleus_r_muscle=soleus_r_muscle)
+dat_temp_final<- cbind(dat_temp1,dat_temp2,dat_temp3,dat_temp4,dat_temp5)
 
 outdat<-rbind(outdat,dat_temp)
 
