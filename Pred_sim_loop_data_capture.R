@@ -92,7 +92,7 @@ dat_temp5<-Work_data(dat)
 
 dat_temp_final<- cbind(dat_temp1,dat_temp2,dat_temp3,dat_temp4,dat_temp5)
 
-outdat<-rbind(outdat,dat_temp)
+outdat<-rbind(outdat,dat_temp_final)
 
 
 }
