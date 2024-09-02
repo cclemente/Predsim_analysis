@@ -21,8 +21,9 @@ ankle_out <- data.frame()
 
 
 for (ii in 1:length(ankle_pflex)) {
-  Fmo<-dat$model.info[,,1]$muscle.info[,,1]$parameters[,,ii]$FMo
-  Act<-dat$R[,,1]$muscles[,,1]$Fiso[,ii]
+  jj<-ankle_pflex[ii]
+  Fmo<-dat$model.info[,,1]$muscle.info[,,1]$parameters[,,jj]$FMo
+  Act<-dat$R[,,1]$muscles[,,1]$Fiso[,jj]
   muscle_force<-Act*rep(Fmo,100)
   ankle_out <- rbind(ankle_out,muscle_force)
   
@@ -43,8 +44,9 @@ hip_ext <- c(1,6,7,8,9,14,15,16,20,21,22)
 hip_out <- data.frame()
 
 for (ii in 1:length(hip_ext)) {
-  Fmo<-dat$model.info[,,1]$muscle.info[,,1]$parameters[,,ii]$FMo
-  Act<-dat$R[,,1]$muscles[,,1]$Fiso[,ii]
+  jj<-hip_ext[ii]
+  Fmo<-dat$model.info[,,1]$muscle.info[,,1]$parameters[,,jj]$FMo
+  Act<-dat$R[,,1]$muscles[,,1]$Fiso[,jj]
   muscle_force<-rep(Fmo,100)*Act
   hip_out <- rbind(hip_out,muscle_force)
   
@@ -63,8 +65,9 @@ knee_ext <- c(28,29,30,31)
 knee_out <- data.frame()
 
 for (ii in 1:length(knee_ext)) {
-  Fmo<-dat$model.info[,,1]$muscle.info[,,1]$parameters[,,ii]$FMo
-  Act<-dat$R[,,1]$muscles[,,1]$Fiso[,ii]
+  jj<-knee_ext[ii]
+  Fmo<-dat$model.info[,,1]$muscle.info[,,1]$parameters[,,jj]$FMo
+  Act<-dat$R[,,1]$muscles[,,1]$Fiso[,jj]
   muscle_force<-rep(Fmo,100)*Act
   knee_out <- rbind(knee_out,muscle_force)
   
